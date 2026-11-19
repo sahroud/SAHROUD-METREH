@@ -158,14 +158,14 @@ table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}th,td{pa
   <div><label>درصد پرت مصالح</label><input id="waste" type="number" value="5" min="0"></div>
  </div>
  <h3>قیمت واحد مصالح و اجرا (قابل ویرایش)</h3>
- <p class="hint">قیمت‌ها نمونه اولیه و قابل جایگزینی با استعلام روز شهر پروژه هستند؛ این فایل به اینترنت یا سامانه قیمت‌گیری متصل نیست.</p>
+ <p class="hint">نرخ‌های اولیه صرفاً نمونه‌اند و نباید مبنای قرارداد قرار گیرند. فهرست‌بهای رسمی و شاخص‌های تعدیل دوره‌ای با نرخ روز بازار یکسان نیستند؛ نرخ روز شهر پروژه باید از استعلام واقعی و تاریخ‌دار همان شهر دریافت شود.</p>
  <div style="overflow:auto;max-height:390px">
  <table id="priceTable"><thead><tr><th>شرح</th><th>واحد</th><th>مصالح</th><th>اجرا</th><th>منبع / تاریخ</th></tr></thead><tbody></tbody></table>
  </div>
  <div class="toolbar no-print"><button class="secondary" id="resetPrices">بازنشانی قیمت نمونه</button><button class="green" id="recalc">محاسبه مجدد</button></div>
- <div class="note" id="priceSourceNote">منابع بررسی‌شده برای قیمت‌گذاری: بازار روز مصالح و آهن‌آلات «الان چند»؛ فهرست‌بهای پایه سازمان برنامه و بودجه؛ شاخص‌های تعدیل رسمی. قیمت‌های این نسخه هنوز به‌صورت خودکار از اینترنت دریافت نمی‌شوند. برای فعال‌سازی دریافت خودکار، به یک واسط امن سمت سرور نیاز است؛ قرار دادن کلید API در فایل HTML امن نیست.</div>
+ <div class="note" id="priceSourceNote">مراجع رسمی مبنا: سامانه امور نظام فنی و اجرایی سازمان برنامه و بودجه برای فهرست‌بهای پایه؛ مرکز آمار ایران برای شاخص و متوسط قیمت نهاده‌های ساختمانی؛ نظام فنی و اجرایی برای شاخص‌های تعدیل. این مراجع نرخ قطعی روزانه و تحویل‌شده برای تمام شهرها منتشر نمی‌کنند. نرخ روز بازار باید جداگانه از بورس کالا (برای اقلام پوشش‌داده‌شده) یا استعلام تاریخ‌دار تأمین‌کننده محلی دریافت شود. تا زمان تنظیم سرویس و منبع داده، نرخ نمونه فقط برای آزمایش محاسبات است.</div>
  <div class="toolbar no-print"><button class="secondary" type="button" id="openMarketSources">بازکردن منابع قیمت روز</button><button class="secondary" type="button" id="priceApiSetup">تنظیم نشانی سرویس قیمت</button><button class="green" type="button" id="fetchDailyPrices">دریافت قیمت‌های روز و محاسبه</button></div>
- <div id="priceSourceReport" class="subtle">مرجع بازار: نرخ‌های اولیه نمونه/دستی‌اند. پس از اتصال سرویس امن، شهر تحویل، واحد پول، منبع و زمان استعلام برای هر قلم کنترل می‌شود. نرخ قدیمی‌تر از ۴۸ ساعت به‌عنوان نرخ تازه پذیرفته نمی‌شود.</div>
+ <div id="priceSourceReport" class="subtle">وضعیت اتصال: سرویس قیمت هنوز پیکربندی نشده است. نرخ‌های دستی/نمونه فقط برای آزمایش محاسبات هستند. نرخ بازار برای پذیرش خودکار باید شهر، واحد، منبع قابل‌ردیابی و زمان استعلام حداکثر ۴۸ ساعت داشته باشد.</div>
  <h3>ستون‌ها و تکیه‌گاه‌ها</h3>
  <div class="grid">
   <div><label>ستون در تقاطع‌ها</label><select id="columns"><option value="none">بدون ستون</option><option value="all">ستون در تمام نقاط</option><option value="corners">فقط کنج‌ها</option><option value="custom">تعداد دستی</option></select></div>
@@ -555,8 +555,8 @@ async function fetchDailyPrices(){
  }catch(e){alert('دریافت قیمت ناموفق بود: '+e.message+'\nممکن است سرویس در دسترس نباشد یا CORS را برای این دامنه فعال نکرده باشد. نرخ قبلی حفظ شد.')}finally{b.disabled=false;b.textContent='دریافت قیمت‌های روز و محاسبه'}
 }
 function configurePriceSources(){
- const links=[['بازار مصالح و آهن‌آلات الان چند','https://alanchand.com/building-materials-price'],['فهرست‌بهای ابنیه ۱۴۰۴ (نسخه منتشرشده)','https://nassira.ir/wp-content/uploads/2025/10/Abnieh1404.pdf'],['شاخص تعدیل رسمی سه‌ماهه دوم ۱۴۰۵','https://newsmedia.tasnimmedia.com/Tasnim/Uploaded/Document/1405/08/12/140508120756543223880875.pdf']];
- $('priceSourceReport').innerHTML=links.map(x=>`<div><a href="${x[1]}" target="_blank" rel="noopener">${x[0]}</a></div>`).join('')+'<p>نرخ بازار مرجع عمدتاً تهران/بورس کالا است و قیمت تحویل شاهرود نیست؛ حمل، مالیات و استعلام فروشنده باید جداگانه اعمال شود.</p>';
+ const links=[['سامانه رسمی امور نظام فنی و اجرایی سازمان برنامه و بودجه — فهرست‌بهای پایه ابنیه ۱۴۰۴','https://sama.mporg.ir/sites/publish/SitePages/ZabetehView.aspx?mdid=5957'],['سازمان برنامه و بودجه کشور — مرجع ابلاغ فهرست‌بها و بخشنامه‌ها','https://www.mporg.ir/'],['مرکز آمار ایران — شاخص و متوسط قیمت نهاده‌های ساختمانی','https://www.amar.org.ir/'],['نظام فنی و اجرایی کشور — مرجع شاخص‌های تعدیل','http://nezamfanni.ir']];
+ $('priceSourceReport').innerHTML='<b>مراجع رسمی برای داده‌های پایه و تعدیل (نه نرخ لحظه‌ای فروشنده):</b>'+links.map(x=>`<div><a href="${x[1]}" target="_blank" rel="noopener">${x[0]}</a></div>`).join('')+'<p><b>محدودیت مهم:</b> فهرست‌بهای پایه معمولاً سالانه و شاخص‌های تعدیل دوره‌ای منتشر می‌شوند؛ این اسناد، قیمت روز تحویل در شهر پروژه نیستند. برای نرخ روز باید منبع معامله/فروشنده یا داده بورس کالا برای همان قلم، شهر، واحد، تاریخ و شرایط حمل مشخص باشد. نرخ فاقد منبع یا تاریخ نباید وارد برآورد شود.</p>';
 }
 function exportCSV(){
  const original={activeFloor,beams,walls,roofLinks,drainPoints,beamSpecs,wallSpecs},all=[];
