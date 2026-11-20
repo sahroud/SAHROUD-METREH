@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="color-scheme" content="light"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAHROUD متره و برآورد ساختمان</title>
-<style>
+<style>@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
 :root{--bg:#f3f6fa;--panel:#fff;--ink:#172334;--muted:#65758b;--line:#d9e1eb;--blue:#1769aa;--teal:#087e75;--orange:#c87916;--red:#b53c3c}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;font-size:14px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Vazirmatn','IRANSansX','IRANSans',Tahoma,Arial,sans-serif;font-size:14px}
 header{background:#102c46;color:white;padding:15px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
 header h1{font-size:19px;margin:0 0 5px}header small{color:#c6d7e8}
 .wrap{max-width:1450px;margin:auto;padding:14px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:14px}
@@ -29,7 +29,7 @@ table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}th,td{pa
 .note{background:#fff7e8;border:1px solid #f0d8a9;border-radius:8px;padding:10px;color:#76501b;font-size:12px;line-height:1.8}
 .hidden{display:none!important}
 .print-only{display:none}
-.plan-sheet{border:1px solid #ccd6e2;border-radius:10px;padding:12px;margin:12px 0;background:#fff}.plan-sheet h3{margin:0 0 8px}.plan-sheet svg{width:100%;height:auto;display:block;max-height:560px}
+.plan-sheet{border:1px solid #ccd6e2;border-radius:10px;padding:12px;margin:12px 0;background:#fff}.plan-sheet h3{margin:0 0 8px}.plan-sheet svg{width:100%;height:auto;display:block;max-height:560px;font-family:'Vazirmatn','IRANSansX',Tahoma,sans-serif}.plan-sheet svg text{direction:rtl;unicode-bidi:plaintext;font-family:'Vazirmatn','IRANSansX',Tahoma,sans-serif}.plan-sheet{font-family:'Vazirmatn','IRANSansX',Tahoma,sans-serif}
 @media print{.print-only{display:block!important}.plan-sheet{break-inside:avoid;page-break-inside:avoid;border:1px solid #9aa8b8;margin:10px 0;padding:8mm}.plan-sheet svg{width:400mm;height:270mm;max-height:none}.plan-sheet{border-radius:0}.plan-sheet table{font-size:10px}.plan-sheet th,.plan-sheet td{padding:4px}.plan-sheet h3{font-size:14px}.print-title{display:block!important}}.wide{grid-column:1/-1}.subtle{color:var(--muted);font-size:11px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:8px}.pill{border-radius:20px;padding:4px 9px;background:#e8f2fb;color:#24577d;font-size:11px}
 @media(max-width:850px){.wrap{grid-template-columns:1fr;padding:9px}.grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}canvas{height:350px}}
@@ -210,10 +210,10 @@ const prices=[
  ['قوطی فولادی','kg',56000,16000],['ورق شیروانی','m²',650000,220000],['عایق و متعلقات','m²',280000,100000],
  ['ستون بتنی - بتن','m³',5200000,1500000],['خاکبرداری','m³',180000,250000],['حمل مصالح','تن',250000,0],['کاشی دیوار','m²',380000,220000],['سرامیک کف','m²',450000,250000],['بتن کف ۵ سانتی','m³',5200000,1200000],['ایزوگام بام','m²',260000,100000],['پوکه شیب‌بندی','m³',1200000,650000],['گچ‌کاری دیوار','m²',180000,140000],['اندود ماسه سیمان دیوار','m²',220000,180000],['اندود سیمان سفید دیوار','m²',240000,190000]
 ];
-let grid=[], beams=[], walls=[], roofLinks=[], beamSpecs=[], wallSpecs=[], selected=null, selectedMember=-1, actionMode='draw', stage='beam', rows=[], lastCalc={};
+let grid=[], beams=[], walls=[], roofLinks=[], beamSpecs=[], wallSpecs=[], roofSpecs=[], selected=null, selectedMember=-1, actionMode='draw', stage='beam', rows=[], lastCalc={};
 let activeFloor=1, floorStore={1:null,2:null}, drainPoints=[], drainMode=false, footings=[], footingSpecs=[];
-function saveFloor(){floorStore[activeFloor]={beams:JSON.parse(JSON.stringify(beams)),walls:JSON.parse(JSON.stringify(walls)),roofLinks:JSON.parse(JSON.stringify(roofLinks)),drainPoints:JSON.parse(JSON.stringify(drainPoints)),beamSpecs:JSON.parse(JSON.stringify(beamSpecs)),wallSpecs:JSON.parse(JSON.stringify(wallSpecs))};}
-function loadFloor(n){saveFloor();activeFloor=n;let d=floorStore[n]||{beams:[],walls:[],roofLinks:[],drainPoints:[],beamSpecs:[],wallSpecs:[]};beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;drainPoints=d.drainPoints||[];beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;selected=null;selectedMember=-1;if(n===2&&stage==='beam')setStage('wall');updateFloorUI();draw();calculate();}
+function saveFloor(){floorStore[activeFloor]={beams:JSON.parse(JSON.stringify(beams)),walls:JSON.parse(JSON.stringify(walls)),roofLinks:JSON.parse(JSON.stringify(roofLinks)),roofSpecs:JSON.parse(JSON.stringify(roofSpecs)),drainPoints:JSON.parse(JSON.stringify(drainPoints)),beamSpecs:JSON.parse(JSON.stringify(beamSpecs)),wallSpecs:JSON.parse(JSON.stringify(wallSpecs))};}
+function loadFloor(n){saveFloor();activeFloor=n;let d=floorStore[n]||{beams:[],walls:[],roofLinks:[],roofSpecs:[],drainPoints:[],beamSpecs:[],wallSpecs:[]};beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints||[];beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;selected=null;selectedMember=-1;if(n===2&&stage==='beam')setStage('wall');updateFloorUI();draw();calculate();}
 function updateFloorUI(){
  $('drainCount').value=fmt(drainPoints.length);
  const two=+$('floorCount').value===2;
@@ -239,7 +239,7 @@ function makeGrid(){
  let nx=Math.max(2,Math.min(12,+$('nx').value||2)),ny=Math.max(2,Math.min(12,+$('ny').value||2));
  let sx=Math.max(.1,+$('sx').value||4),sy=Math.max(.1,+$('sy').value||4);grid=[];
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)grid.push({id:j*nx+i,x:i*sx,y:j*sy});
- beams=[]; walls=[];roofLinks=[];drainPoints=[];beamSpecs=[];wallSpecs=[];footings=[];footingSpecs=[];floorStore={1:null,2:null};activeFloor=1;selected=null;selectedMember=-1;draw();calculate();
+ beams=[]; walls=[];roofLinks=[];roofSpecs=[];drainPoints=[];beamSpecs=[];wallSpecs=[];footings=[];footingSpecs=[];floorStore={1:null,2:null};activeFloor=1;selected=null;selectedMember=-1;draw();calculate();
 }
 function canvasPoint(p){
  let maxX=Math.max(...grid.map(n=>n.x),1),maxY=Math.max(...grid.map(n=>n.y),1),pad=55;
@@ -265,10 +265,10 @@ function draw(){
   beams.forEach(([a,b],i)=>{let p=pt(grid[a]),q=pt(grid[b]);ctx.strokeStyle=i===selectedMember?'#d62828':'#c87916';ctx.lineWidth=i===selectedMember?13:9;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()});
  }
  if($('showWall').checked){
-  walls.forEach(([a,b],i)=>{let p=pt(grid[a]),q=pt(grid[b]);ctx.strokeStyle=(stage==='wall'&&i===selectedMember)?'#d62828':'#1769aa';ctx.lineWidth=(stage==='wall'&&i===selectedMember)?10:5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()});
+  walls.forEach(([a,b],i)=>{let p=pt(grid[a]),q=pt(grid[b]);const sp=wallSpecs[i]||{},t=Math.max(.08,+sp.th||.2)*s,dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy)||1,nx=-dy/L*t/2,ny=dx/L*t/2,col=({brick20:'#2563eb',brick35:'#7c3aed',block10:'#0d9488',block15:'#0f766e',block:'#b45309',panel:'#64748b'})[sp.type]||'#2563eb';ctx.strokeStyle=(stage==='wall'&&i===selectedMember)?'#dc2626':col;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(p.x+nx,p.y+ny);ctx.lineTo(q.x+nx,q.y+ny);ctx.moveTo(p.x-nx,p.y-ny);ctx.lineTo(q.x-nx,q.y-ny);ctx.stroke();ctx.fillStyle=col;ctx.font='11px Tahoma';ctx.fillText(`${Math.round((sp.th||.2)*100)}cm`,(p.x+q.x)/2+nx+4,(p.y+q.y)/2+ny-4)});
  }
  if($('showRoof').checked && roofLinks.length){
-  roofLinks.forEach(([a,b],i)=>{let p=pt(grid[a]),q=pt(grid[b]);ctx.strokeStyle=(stage==='roof'&&i===selectedMember)?'#d62828':'#087e75';ctx.lineWidth=(stage==='roof'&&i===selectedMember)?11:7;ctx.setLineDash([10,5]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])});
+  roofLinks.forEach(([a,b],i)=>{let p=pt(grid[a]),q=pt(grid[b]);ctx.strokeStyle=(stage==='roof'&&i===selectedMember)?'#d62828':'#087e75';ctx.lineWidth=(stage==='roof'&&i===selectedMember)?11:7;ctx.setLineDash([10,5]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([]);const rs=roofSpecs[i]||{direction:$('roofDirection').value};const mx=(p.x+q.x)/2,my=(p.y+q.y)/2,ux=rs.direction==='y'?0:1,uy=rs.direction==='y'?1:0,al=18;ctx.save();ctx.strokeStyle='#064e3b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx-ux*al,my-uy*al);ctx.lineTo(mx+ux*al,my+uy*al);ctx.moveTo(mx-ux*al,my-uy*al);ctx.lineTo(mx-ux*al+uy*6,my-uy*al-ux*6);ctx.moveTo(mx-ux*al,my-uy*al);ctx.lineTo(mx-ux*al-uy*6,my-uy*al+ux*6);ctx.moveTo(mx+ux*al,my+uy*al);ctx.lineTo(mx+ux*al-uy*6,my+uy*al+ux*6);ctx.moveTo(mx+ux*al,my+uy*al);ctx.lineTo(mx+ux*al+uy*6,my+uy*al-ux*6);ctx.stroke();ctx.restore()});
  }
  if($('showRoof').checked && drainPoints.length){
   // Schematic auto-grid over roof bounds; hydraulic computation uses nearest-drain distance.
@@ -311,13 +311,13 @@ $('plan').addEventListener('click',e=>{
  list.forEach(([a,b],i)=>{let d=segmentDistance({x,y},canvasPoint(grid[a]),canvasPoint(grid[b]));if(d<bestD){bestD=d;hit=i}});
  if(actionMode==='select'||actionMode==='delete'){
   if(hit<0||bestD>18){selected=null;selectedMember=-1;draw();return;}
-  if(actionMode==='delete'){list.splice(hit,1);if(stage==='beam')beamSpecs.splice(hit,1);if(stage==='wall')wallSpecs.splice(hit,1);selected=null;selectedMember=-1;draw();calculate();return;}
+  if(actionMode==='delete'){list.splice(hit,1);if(stage==='beam')beamSpecs.splice(hit,1);if(stage==='wall')wallSpecs.splice(hit,1);if(stage==='roof')roofSpecs.splice(hit,1);selected=null;selectedMember=-1;draw();calculate();return;}
   selectedMember=hit;selected=null;draw();return;
  }
  let best=-1,dist=1e9;grid.forEach((n,i)=>{let p=canvasPoint(n),d=Math.hypot(p.x-x,p.y-y);if(d<dist){dist=d;best=i}});
  if(dist>35)return;
  if(selected===null){selected=best;selectedMember=-1;draw();return;}
- if(selected!==best){let pair=[selected,best];if(!list.some(v=>(v[0]===pair[0]&&v[1]===pair[1])||(v[1]===pair[0]&&v[0]===pair[1]))){list.push(pair);if(stage==='beam')beamSpecs.push({bw:+$('bw').value||.5,bh:+$('bh').value||.6,longDia:+$('longDia').value,top:+$('topBars').value||0,bottom:+$('bottomBars').value||0,stDia:+$('stDia').value,stSpace:+$('stSpace').value||17});if(stage==='wall')wallSpecs.push({th:+$('wallT').value||.2,type:$('wallType').value,height:+$('wallHeight2').value||+$('wallH').value||3,doorCount:Math.max(0,+$('doorCount').value||0),doorWidth:Math.max(0,+$('doorWidth').value||0),doorHeight:Math.max(0,+$('doorHeight').value||0),windowCount:Math.max(0,+$('windowCount').value||0),windowWidth:Math.max(0,+$('windowWidth').value||0),windowHeight:Math.max(0,+$('windowHeight').value||0)});}}
+ if(selected!==best){let pair=[selected,best];if(!list.some(v=>(v[0]===pair[0]&&v[1]===pair[1])||(v[1]===pair[0]&&v[0]===pair[1]))){list.push(pair);if(stage==='beam')beamSpecs.push({bw:+$('bw').value||.5,bh:+$('bh').value||.6,longDia:+$('longDia').value,top:+$('topBars').value||0,bottom:+$('bottomBars').value||0,stDia:+$('stDia').value,stSpace:+$('stSpace').value||17});if(stage==='roof')roofSpecs.push({direction:$('roofDirection').value==='y'?'y':'x'});if(stage==='wall')wallSpecs.push({th:+$('wallT').value||.2,type:$('wallType').value,height:+$('wallHeight2').value||+$('wallH').value||3,doorCount:Math.max(0,+$('doorCount').value||0),doorWidth:Math.max(0,+$('doorWidth').value||0),doorHeight:Math.max(0,+$('doorHeight').value||0),windowCount:Math.max(0,+$('windowCount').value||0),windowWidth:Math.max(0,+$('windowWidth').value||0),windowHeight:Math.max(0,+$('windowHeight').value||0)});}}
  selected=null;selectedMember=-1;draw();calculate();
 });
 function lengthOf(list){return list.reduce((s,[a,b])=>s+Math.hypot(grid[a].x-grid[b].x,grid[a].y-grid[b].y),0)}
@@ -460,20 +460,20 @@ function calculate(){
 
 function downloadBlob(filename,blob){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
 function projectFloorSnapshot(f){
- const d=f===activeFloor?{beams,walls,roofLinks,drainPoints,beamSpecs,wallSpecs}:floorStore[f]||{};
- return {beams:d.beams||[],walls:d.walls||[],roofLinks:d.roofLinks||[],drainPoints:d.drainPoints||[],beamSpecs:d.beamSpecs||[],wallSpecs:d.wallSpecs||[]};
+ const d=f===activeFloor?{beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs}:floorStore[f]||{};
+ return {beams:d.beams||[],walls:d.walls||[],roofLinks:d.roofLinks||[],roofSpecs:d.roofSpecs||[],drainPoints:d.drainPoints||[],beamSpecs:d.beamSpecs||[],wallSpecs:d.wallSpecs||[]};
 }
 function buildFinalReport(){
- saveFloor();const original={activeFloor,beams,walls,roofLinks,drainPoints,beamSpecs,wallSpecs};
+ saveFloor();const original={activeFloor,beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs};
  const nFloors=Math.max(1,+$('floorCount').value||1),floorResults=[];let allMat=0,allLab=0;
  for(let f=1;f<=nFloors;f++){
-  const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;
+  const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;
   calculate();const floorRows=rows.map(r=>({...r})),mat=+$('materialsTotal').textContent.replace(/[^0-9.]/g,'')||floorRows.reduce((a,r)=>a+r.material,0),lab=floorRows.reduce((a,r)=>a+r.labor,0),total=floorRows.reduce((a,r)=>a+r.material+r.labor,0);
   allMat+=floorRows.reduce((a,r)=>a+r.material,0);allLab+=floorRows.reduce((a,r)=>a+r.labor,0);
   const steelHtml=$('steelOutput').innerHTML;
   floorResults.push({f,d,rows:floorRows,steelHtml,total,mat:floorRows.reduce((a,r)=>a+r.material,0),lab});
  }
- activeFloor=original.activeFloor;beams=original.beams;walls=original.walls;roofLinks=original.roofLinks;drainPoints=original.drainPoints;beamSpecs=original.beamSpecs;wallSpecs=original.wallSpecs;calculate();
+ activeFloor=original.activeFloor;beams=original.beams;walls=original.walls;roofLinks=original.roofLinks;roofSpecs=original.roofSpecs;drainPoints=original.drainPoints;beamSpecs=original.beamSpecs;wallSpecs=original.wallSpecs;calculate();
  const cur=$('currency').value,fmtMoney=n=>fmt(n)+' '+cur;
  const specRows=[['ضخامت دیوارهای ترسیم‌شده',[...new Set(wallSpecs.map(w=>Math.round((w.th||.2)*100)))].sort((a,b)=>a-b).map(v=>v+' سانتی‌متر').join('، ')||'ثبت نشده'],['جهت تیرریزی سقف',$('roofDirection').value==='x'?'در امتداد طول محور X':'در امتداد عرض محور Y'],['نام پروژه',$('project').value],['محل پروژه',$('city').value],['تاریخ گزارش',new Date().toLocaleDateString('fa-IR')],['تعداد طبقات',nFloors],['تعداد محور طولی × عرضی',`${$('nx').value} × ${$('ny').value}`],['فواصل محورهای طولی و عرضی',`${$('sx').value} و ${$('sy').value} متر`],['واحد پول',cur],['درصد پرت مصالح',$('waste').value+'٪']];
  let html=`<div class="plan-sheet" id="finalReportSheet"><h2>گزارش نهایی فنی، متره و برآورد</h2><p><b>SAHROUD METREH</b> — پروژه: ${$('project').value} | محل: ${$('city').value}</p><h3>الف) مشخصات عمومی پروژه</h3><table><tbody>${specRows.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</tbody></table>`;
@@ -518,7 +518,7 @@ function exportDXF(){
   axisYs.forEach((y,i)=>{line({x:-.25,y:y+off},{x:maxX+.25,y:y+off},'GRID');out+=dxfText(-.55,y+off,.16,String(i+1),'GRID')});
   grid.forEach((n,i)=>{let q={x:n.x,y:n.y+off};out+=dxfText(q.x+.08,q.y+.08,.12,String(i+1),'TEXT');});
   const drawSegs=(arr,layer)=>arr.forEach((e,i)=>{let a=grid[e[0]],b=grid[e[1]];if(!a||!b)return;let A={x:a.x,y:a.y+off},B={x:b.x,y:b.y+off};line(A,B,layer);let L=Math.hypot(a.x-b.x,a.y-b.y);out+=dxfText((A.x+B.x)/2,(A.y+B.y)/2+.08,.12,`${i+1} ${L.toFixed(2)}m`,'DIM')});
-  drawSegs(d.beams,`BEAM_F${f}`);drawSegs(d.walls,`WALL_F${f}`);drawSegs(d.roofLinks,`ROOF_F${f}`);
+  drawSegs(d.beams,`BEAM_F${f}`);d.walls.forEach((e,i)=>{const a=grid[e[0]],b=grid[e[1]],sp=d.wallSpecs[i]||{},L=Math.hypot(b.x-a.x,b.y-a.y)||1,t=Math.max(.08,+sp.th||.2)/2,nx=-(b.y-a.y)/L*t,ny=(b.x-a.x)/L*t,A={x:a.x,y:a.y+off},B={x:b.x,y:b.y+off};line({x:A.x+nx,y:A.y+ny},{x:B.x+nx,y:B.y+ny},`WALL_F${f}`);line({x:A.x-nx,y:A.y-ny},{x:B.x-nx,y:B.y-ny},`WALL_F${f}`);out+=dxfText((A.x+B.x)/2,(A.y+B.y)/2+.12,.12,`${i+1} T=${Math.round((sp.th||.2)*100)}cm`,'DIM')});drawSegs(d.roofLinks,`ROOF_F${f}`);d.roofLinks.forEach((e,i)=>{const a=grid[e[0]],b=grid[e[1]],sp=d.roofSpecs[i]||{direction:'x'},mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=sp.direction==='y'?0:.45,dy=sp.direction==='y'?.45:0;line({x:mx-dx,y:my-dy+off},{x:mx+dx,y:my+dy+off},`ROOF_F${f}`)});
   d.drainPoints.forEach((id,i)=>{let n=grid[id];if(n){let c={x:n.x,y:n.y+off};line({x:c.x-.12,y:c.y-.12},{x:c.x+.12,y:c.y+.12},`DRAIN_F${f}`);line({x:c.x-.12,y:c.y+.12},{x:c.x+.12,y:c.y-.12},`DRAIN_F${f}`);out+=dxfText(c.x+.15,c.y+.15,.14,`D${i+1}`,`DRAIN_F${f}`)}});
   if(f===1)footings.forEach((id,i)=>{const n=grid[id],sp=footingSpecs[i]||{},w=+sp.l||1.8,h=+sp.w||1.8;if(!n)return;const x=n.x-w/2,y=n.y+off-h/2,A={x,y},B={x:x+w,y},C={x:x+w,y:y+h},D={x,y:y+h},cl=Math.max(0,+$('excavationClearance').value||0),lo=Math.max(0,+$('leanOverhang').value||0);const rect=(x0,y0,ww,hh,layer)=>{const p1={x:x0,y:y0},p2={x:x0+ww,y:y0},p3={x:x0+ww,y:y0+hh},p4={x:x0,y:y0+hh};line(p1,p2,layer);line(p2,p3,layer);line(p3,p4,layer);line(p4,p1,layer)};rect(x-cl,y-cl,w+2*cl,h+2*cl,'EXCAVATION');rect(x-lo,y-lo,w+2*lo,h+2*lo,'LEAN');line(A,B,'FOUNDATION');line(B,C,'FOUNDATION');line(C,D,'FOUNDATION');line(D,A,'FOUNDATION');
    if(+sp.layers>0&&+sp.space>0){const gap=+sp.space/100,cover=.05;for(let xx=cover;xx<w-cover+.0001;xx+=gap)line({x:x+xx,y:y+cover},{x:x+xx,y:y+h-cover},'FOUNDATION');for(let yy=cover;yy<h-cover+.0001;yy+=gap)line({x:x+cover,y:y+yy},{x:x+w-cover,y:y+yy},'FOUNDATION');}
