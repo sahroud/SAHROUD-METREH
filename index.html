@@ -617,4 +617,9 @@ $('topBars').addEventListener('input',updateBeamBarCounts);$('bottomBars').addEv
 ['wallFinish','wallTileSides','tileHeight','roofDirection','joistBarDia','joistBarCount','waterproofWaste','waterproofUpstand','waterproofLayers','floorFinish','floorConcreteT','tileWaste','roofSlopePct','drainGridStep','bw','bh','longDia','topBars','bottomBars','stDia','stSpace','wallT','wallType','wallHeight2','doorCount','doorWidth','doorHeight','windowCount','windowWidth','windowHeight','roofType','blockType','foamLength','foamWidth','topping','joistSpace','joistDepth','purlin','sheetT','purlinSpace','slopeFactor','archSupport','archSpace','archBeam','columns','columnCount','colHeight','overhang','waste','currency','project','city'].forEach(id=>$(id).addEventListener('change',calculate));
 makeGrid();priceTable();updateFloorUI();$('drainCount').value='۰';calculate();
 </script>
+
+<!-- SAHROUD COUNTER shared analytics; activates after central API configuration and user consent -->
+<script>window.SAHROUD_COUNTER_CONFIG={appId:"metreh",appName:"SAHROUD Metreh",version:"1.0"};</script>
+<script src="https://sahroud.github.io/A/counter/config.js"></script>
+<script src="https://sahroud.github.io/A/counter/client.js" defer></script>
 </body></html>
