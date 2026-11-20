@@ -391,7 +391,7 @@ function roofSlopeMetrics(A){
  const avg=sum/count;return {volume:A*avg,avgDepth:avg,maxDepth:max,samples:count,valid:true};
 }
 function calculate(){
- readPrices();rows=[];$('wallReport').innerHTML='';let steel=[];const waste=1+(Math.max(0,+$('waste').value||0)/100);
+ updateJoistWallOptions();readPrices();rows=[];$('wallReport').innerHTML='';let steel=[];const waste=1+(Math.max(0,+$('waste').value||0)/100);
  const L=lengthOf(beams),wallL=lengthOf(walls),roofExists=roofLinks.length>0;
  $('nodeCount').textContent=fmt(grid.length);$('beamLength').textContent=fmt(L)+' m';$('roofArea').textContent=roofExists?fmt(area())+' m²':'—';$('wallLength').textContent=fmt(wallL)+' m';$('beamLength').parentElement.style.display=beams.length?'':'none';$('roofArea').parentElement.style.display=roofExists?'':'none';$('wallLength').parentElement.style.display=walls.length?'':'none';
  // Keep a project-level geometry snapshot for every floor; quantity/cost rows below remain explicitly scoped to the active floor.
