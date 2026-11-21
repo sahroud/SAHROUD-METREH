@@ -214,7 +214,7 @@ const prices=[
 let grid=[], beams=[], walls=[], roofLinks=[], beamSpecs=[], wallSpecs=[], roofSpecs=[], selected=null, selectedMember=-1, actionMode='draw', stage='beam', rows=[], lastCalc={};
 let activeFloor=1, floorStore={1:null,2:null}, drainPoints=[], drainMode=false, footings=[], footingSpecs=[], selectedRoofIndex=-1;
 function saveFloor(){floorStore[activeFloor]={beams:JSON.parse(JSON.stringify(beams)),walls:JSON.parse(JSON.stringify(walls)),roofLinks:JSON.parse(JSON.stringify(roofLinks)),roofSpecs:JSON.parse(JSON.stringify(roofSpecs)),drainPoints:JSON.parse(JSON.stringify(drainPoints)),beamSpecs:JSON.parse(JSON.stringify(beamSpecs)),wallSpecs:JSON.parse(JSON.stringify(wallSpecs))};}
-function loadFloor(n){saveFloor();activeFloor=n;let d=floorStore[n]||{beams:[],walls:[],roofLinks:[],roofSpecs:[],drainPoints:[],beamSpecs:[],wallSpecs:[]};beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints||[];beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;selected=null;selectedMember=-1;if(n===2&&stage==='beam')setStage('wall');updateFloorUI();draw();calculate();}
+function loadFloor(n){saveFloor();activeFloor=n;selectedRoofIndex=-1;let d=floorStore[n]||{beams:[],walls:[],roofLinks:[],roofSpecs:[],drainPoints:[],beamSpecs:[],wallSpecs:[]};beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints||[];beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;selected=null;selectedMember=-1;if(n===2&&stage==='beam')setStage('wall');updateFloorUI();draw();calculate();}
 function updateFloorUI(){
  $('drainCount').value=fmt(drainPoints.length);
  const two=+$('floorCount').value===2;
@@ -291,7 +291,7 @@ function setStage(s){
  // طبقه دوم فقط دیوار و سقف دارد؛ فونداسیون و شناژ صرفاً در تراز همکف فعال‌اند.
  if(activeFloor===2&&(s==='beam'||s==='foundation'))s='wall';
  if(!['foundation','beam','wall','roof'].includes(s))s='wall';
- stage=s;document.querySelectorAll('[data-stage]').forEach(b=>{b.classList.toggle('active',b.dataset.stage===s);b.disabled=activeFloor===2&&(b.dataset.stage==='foundation'||b.dataset.stage==='beam')});
+ stage=s;selectedRoofIndex=-1;document.querySelectorAll('[data-stage]').forEach(b=>{b.classList.toggle('active',b.dataset.stage===s);b.disabled=activeFloor===2&&(b.dataset.stage==='foundation'||b.dataset.stage==='beam')});
  $('modePill').textContent='حالت: '+({foundation:'فونداسیون',beam:'شناژ',wall:'دیوار',roof:'سقف'}[s]);
  $('foundationSettings').classList.toggle('hidden',s!=='foundation');$('beamSettings').classList.toggle('hidden',s!=='beam');$('wallSettings').classList.toggle('hidden',s!=='wall');$('roofSettings').classList.toggle('hidden',s!=='roof');
  selected=null;selectedMember=-1;selectedRoofIndex=-1;const layer={foundation:'showFoundation',beam:'showBeam',wall:'showWall',roof:'showRoof'}[s];['showFoundation','showBeam','showWall','showRoof'].forEach(id=>$(id).checked=id===layer);
@@ -513,12 +513,12 @@ function buildFinalReport(){
  let html=`<div class="plan-sheet" id="finalReportSheet"><h2>گزارش نهایی فنی، متره و برآورد</h2><p><b>SAHROUD METREH</b> — پروژه: ${$('project').value} | محل: ${$('city').value}</p><h3>الف) مشخصات عمومی پروژه</h3><table><tbody>${specRows.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</tbody></table>`;
  let grandQty=0;
  floorResults.forEach(x=>{
-  const {f,d}=x,bl=d.beams.reduce((a,e)=>a+Math.hypot(grid[e[0]].x-grid[e[1]].x,grid[e[0]].y-grid[e[1]].y),0),wl=d.walls.reduce((a,e)=>a+Math.hypot(grid[e[0]].x-grid[e[1]].x,grid[e[0]].y-grid[e[1]].y),0),pm=polygonMetrics(d.roofLinks),ra=d.roofLinks.length?areaForLinks(d.roofLinks):0;
+  const {f,d}=x,bl=d.beams.reduce((a,e)=>a+Math.hypot(grid[e[0]].x-grid[e[1]].x,grid[e[0]].y-grid[e[1]].y),0),wl=d.walls.reduce((a,e)=>a+Math.hypot(grid[e[0]].x-grid[e[1]].x,grid[e[0]].y-grid[e[1]].y),0),regs=roofRegions(d.roofLinks),pm=regs.length?regs[0].metrics:null,ra=regs.reduce((z,r)=>z+areaForLinks(r.edgeIds.map(i=>d.roofLinks[i])),0);
   html+=`<h3>${f===1?'ب':'ج'}) مشخصات و متره طبقه ${f===1?'اول':'دوم'}</h3><table><thead><tr><th>شرح</th><th>مقدار</th><th>واحد</th></tr></thead><tbody>`;
   if(f===1&&footings.length)html+=`<tr><td>تعداد پی‌های منفرد ترسیم‌شده</td><td>${footings.length}</td><td>عدد</td></tr>`;
   if(d.beams.length)html+=`<tr><td>شناژهای ترسیم‌شده</td><td>${fmt(bl)}</td><td>متر طول</td></tr>`;
   if(d.walls.length)html+=`<tr><td>دیوارهای ترسیم‌شده</td><td>${fmt(wl)}</td><td>متر طول</td></tr>`;
-  if(d.roofLinks.length)html+=`<tr><td>مساحت سقف ${pm?'چندضلعی':'مبنای شبکه'}</td><td>${fmt(ra)}</td><td>مترمربع</td></tr>`;
+  if(regs.length)html+=`<tr><td>مجموع مساحت سقف‌های بسته‌شده</td><td>${fmt(ra)}</td><td>مترمربع</td></tr>`;
   if(d.drainPoints.length)html+=`<tr><td>تعداد ناودان‌های مشخص‌شده</td><td>${d.drainPoints.length}</td><td>عدد</td></tr>`;
   html+='</tbody></table>';
   if(f===1&&footings.length){html+=`<h3>جدول مشخصات و متره پی‌های منفرد</h3><table><thead><tr><th>شماره پی</th><th>نقطه شبکه</th><th>طول (m)</th><th>عرض (m)</th><th>ضخامت (m)</th><th>حجم گود (m³)</th><th>حجم مگر (m³)</th><th>حجم بتن پی (m³)</th><th>شبکه میلگرد</th><th>تعداد میلگرد نظری</th><th>طول کل نظری</th><th>وزن نظری</th></tr></thead><tbody>${footings.map((id,i)=>{const sp=footingSpecs[i]||{},n=grid[id]||{x:0,y:0},l=+sp.l||1.8,w=+sp.w||1.8,dpth=+sp.d||.8,space=Math.max(1,+sp.space||15)/100,cover=.1,nL=Math.ceil(Math.max(.1,l-cover)/space)+1,nW=Math.ceil(Math.max(.1,w-cover)/space)+1,barCount=(nL+nW)*(+sp.layers||0),barLength=(nL*Math.max(.1,w-cover)+nW*Math.max(.1,l-cover))*(+sp.layers||0),barWeight=barLength*((+sp.dia||16)**2/162);return `<tr><td>P${i+1}</td><td>${fmt(n.x)}, ${fmt(n.y)}</td><td>${fmt(l)}</td><td>${fmt(w)}</td><td>${fmt(dpth)}</td><td>${fmt((l+2*Math.max(0,+$('excavationClearance').value||0))*(w+2*Math.max(0,+$('excavationClearance').value||0))*(dpth+Math.max(0,+$('leanThickness').value||0)))}</td><td>${fmt((l+2*Math.max(0,+$('leanOverhang').value||0))*(w+2*Math.max(0,+$('leanOverhang').value||0))*Math.max(0,+$('leanThickness').value||0))}</td><td>${fmt(l*w*dpth)}</td><td>${+sp.layers>0?`${sp.layers} لایه، Ø${sp.dia} @ ${sp.space}cm`:'ثبت نشده'}</td><td>${+sp.layers>0?fmt(barCount):'—'}</td><td>${+sp.layers>0?fmt(barLength)+' m':'—'}</td><td>${+sp.layers>0?fmt(barWeight)+' kg':'—'}</td></tr>`}).join('')}</tbody></table>`}
@@ -600,9 +600,9 @@ function configurePriceSources(){
  $('priceSourceReport').innerHTML='<b>مراجع رسمی برای داده‌های پایه و تعدیل (نه نرخ لحظه‌ای فروشنده):</b>'+links.map(x=>`<div><a href="${x[1]}" target="_blank" rel="noopener">${x[0]}</a></div>`).join('')+'<p><b>محدودیت مهم:</b> فهرست‌بهای پایه معمولاً سالانه و شاخص‌های تعدیل دوره‌ای منتشر می‌شوند؛ این اسناد، قیمت روز تحویل در شهر پروژه نیستند. برای نرخ روز باید منبع معامله/فروشنده یا داده بورس کالا برای همان قلم، شهر، واحد، تاریخ و شرایط حمل مشخص باشد. نرخ فاقد منبع یا تاریخ نباید وارد برآورد شود.</p>';
 }
 function exportCSV(){
- const original={activeFloor,beams,walls,roofLinks,drainPoints,beamSpecs,wallSpecs},all=[];
+ const original={activeFloor,beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs},all=[];
  saveFloor();for(let f=1;f<=Math.max(1,+$('floorCount').value||1);f++){const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;calculateSingleFloor();rows.forEach(r=>all.push([f===1?'اول':'دوم',r.name,r.unit,r.qty,r.material,r.labor,r.material+r.labor]));}
- activeFloor=original.activeFloor;beams=original.beams;walls=original.walls;roofLinks=original.roofLinks;drainPoints=original.drainPoints;beamSpecs=original.beamSpecs;wallSpecs=original.wallSpecs;calculate();
+ activeFloor=original.activeFloor;beams=original.beams;walls=original.walls;roofLinks=original.roofLinks;roofSpecs=original.roofSpecs;drainPoints=original.drainPoints;beamSpecs=original.beamSpecs;wallSpecs=original.wallSpecs;calculate();
  let lines=[['طبقه','شرح','واحد','مقدار','هزینه مصالح','دستمزد','جمع'],...all];let csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');downloadBlob('SAHROUD-metreh-all-floors.csv',new Blob([csv],{type:'text/csv;charset=utf-8'}));
 }
 function saveWholeProject(){
