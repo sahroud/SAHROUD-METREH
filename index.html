@@ -400,14 +400,14 @@ function roofSlopeMetrics(A){
  if(!count){let d=Math.max(...ds.map(p=>Math.hypot(maxX-minX,maxY-minY)));return {volume:A*d*slope/2,avgDepth:d*slope/2,maxDepth:d*slope,samples:0,valid:true};}
  const avg=sum/count;return {volume:A*avg,avgDepth:avg,maxDepth:max,samples:count,valid:true};
 }
-function calculate(){
+function calculateSingleFloor(){
  readPrices();rows=[];$('wallReport').innerHTML='';let steel=[];const waste=1+(Math.max(0,+$('waste').value||0)/100);
  const L=lengthOf(beams),wallL=lengthOf(walls),roofExists=roofLinks.length>0;
  $('nodeCount').textContent=fmt(grid.length);$('beamLength').textContent=fmt(L)+' m';$('roofArea').textContent=roofExists?fmt(area())+' m²':'—';$('wallLength').textContent=fmt(wallL)+' m';$('beamLength').parentElement.style.display=beams.length?'':'none';$('roofArea').parentElement.style.display=roofExists?'':'none';$('wallLength').parentElement.style.display=walls.length?'':'none';
  // Keep a project-level geometry snapshot for every floor; quantity/cost rows below remain explicitly scoped to the active floor.
  saveFloor();
- const floorRows=[];for(let f=1;f<=Math.max(1,+$('floorCount').value||1);f++){const d=f===activeFloor?{beams,walls,roofLinks}:floorStore[f]||{beams:[],walls:[],roofLinks:[]};const bl=d.beams.reduce((a,[u,v])=>a+Math.hypot(grid[u].x-grid[v].x,grid[u].y-grid[v].y),0);const wl=d.walls.reduce((a,[u,v])=>a+Math.hypot(grid[u].x-grid[v].x,grid[u].y-grid[v].y),0);const re=d.roofLinks.length>0;floorRows.push(`<tr><td>طبقه ${f===1?'اول':'دوم'}</td><td>${d.beams.length?fmt(bl)+' متر':'—'}</td><td>${d.walls.length?fmt(wl)+' متر':'—'}</td><td>${re?fmt(areaForLinks(d.roofLinks))+' مترمربع':'—'}</td><td>${d.beams.length+d.walls.length+d.roofLinks.length}</td></tr>`)}
- $('floorSummary').innerHTML=`<h3>خلاصه هندسه طبقات پروژه</h3><div style="overflow:auto"><table><thead><tr><th>طبقه</th><th>طول شناژ</th><th>طول دیوار</th><th>مساحت مبنای سقف*</th><th>تعداد اعضای ترسیم‌شده</th></tr></thead><tbody>${floorRows.join('')}</tbody></table></div><p class="subtle">* اگر اضلاع سقف یک چندضلعی بسته و بدون انشعاب بسازند، مساحت از همان چندضلعی محاسبه می‌شود؛ پیش‌آمدگی با تقریب محیط×پیش‌آمدگی + π×پیش‌آمدگی² افزوده می‌شود. در صورت باز یا ناقص بودن مرز، مساحت مستطیلی شبکه مبناست. جدول هزینه و ریزمتره پایین مربوط به طبقه فعال است.</p>`;
+ const floorRows=[];for(let f=1;f<=Math.max(1,+$('floorCount').value||1);f++){const d=f===activeFloor?{beams,walls,roofLinks}:floorStore[f]||{beams:[],walls:[],roofLinks:[]};const bl=d.beams.reduce((a,[u,v])=>a+Math.hypot(grid[u].x-grid[v].x,grid[u].y-grid[v].y),0);const wl=d.walls.reduce((a,[u,v])=>a+Math.hypot(grid[u].x-grid[v].x,grid[u].y-grid[v].y),0);const regs=roofRegions(d.roofLinks),re=regs.length>0,ra=regs.reduce((z,r)=>z+areaForLinks(r.edgeIds.map(i=>d.roofLinks[i])),0);floorRows.push(`<tr><td>طبقه ${f===1?'اول':'دوم'}</td><td>${d.beams.length?fmt(bl)+' متر':'—'}</td><td>${d.walls.length?fmt(wl)+' متر':'—'}</td><td>${re?fmt(ra)+' مترمربع':'—'}</td><td>${d.beams.length+d.walls.length+d.roofLinks.length}</td></tr>`)}
+ $('floorSummary').innerHTML=`<h3>خلاصه هندسه طبقات پروژه</h3><div style="overflow:auto"><table><thead><tr><th>طبقه</th><th>طول شناژ</th><th>طول دیوار</th><th>مساحت مبنای سقف*</th><th>تعداد اعضای ترسیم‌شده</th></tr></thead><tbody>${floorRows.join('')}</tbody></table></div><p class="subtle">* مساحت فقط برای مرزهای بسته و مستقل محاسبه می‌شود؛ سقف‌های باز در متره وارد نمی‌شوند. جدول هزینه و ریزمتره پایین جمع همه طبقات را نشان می‌دهد.</p>`;
  const nxv=Math.max(2,+$('nx').value||2),nyv=Math.max(2,+$('ny').value||2);$('cornerCount').textContent='۴';$('crossCount').textContent=fmt(Math.max(0,(nxv-2)*(nyv-2)));
  // Beam quantities, based on the properties saved when each segment was drawn.
  if(beams.length){
@@ -446,18 +446,18 @@ function calculate(){
   if(fc>0)addRow('بتن کف با ضخامت '+fmt(fc*100)+' سانتی‌متر','m³',floorA*fc*waste,20);
   if($('floorFinish').value==='ceramic')addRow('سرامیک کف','m²',floorA*tileW,19);
  }
- // Roof quantities are shown only after at least one roof boundary segment is drawn.
- if(roofExists){let A=area(),ra=A*(+$('slopeFactor').value||1),rt=$('roofType').value,ts=(+$('topping').value||5)/100;
-  if(rt==='joist'){addRow('بتن رویه سقف تیرچه و بلوک','m³',A*ts,0);let js=Math.max(.2,+$('joistSpace').value||.5),dx=Math.max(...grid.map(n=>n.x)),dy=Math.max(...grid.map(n=>n.y)),span=$('roofDirection').value==='x'?dx:dy,across=$('roofDirection').value==='x'?dy:dx,jcount=Math.ceil(across/js)+1,totalJoist=jcount*span;$('wallReport').innerHTML+=`<p class="hint">جهت تیرریزی: ${$('roofDirection').value==='x'?'در امتداد طول':'در امتداد عرض'} | تعداد تیرچه: ${fmt(jcount)} ردیف | دهانه مبنای هر تیرچه: ${fmt(span)} متر.</p>`;addRow('تیرچه سقف — '+jcount+' ردیف','m',totalJoist,8);let blockQty=$('blockType').value==='پلی‌استایرن'?A/(Math.max(.1,+$('foamLength').value||2)*Math.max(.1,+$('foamWidth').value||.5)):A*8.5;addRow('بلوک سقفی ('+$('blockType').value+')','عدد',blockQty*waste,9);addRow('میلگرد طولی تیرچه','kg',totalJoist*Math.max(1,+$('joistBarCount').value||3)*(Math.pow(+$('joistBarDia').value||12,2)/162)*waste,1);addRow('میلگرد حرارتی / تقویتی سقف','kg',A*4.5*waste,10);}
-  else if(rt==='arch'){let as=Math.max(.3,+$('archSpace').value||1),dx=Math.max(...grid.map(n=>n.x)),dy=Math.max(...grid.map(n=>n.y)),span=$('roofDirection').value==='x'?dx:dy,width=$('roofDirection').value==='x'?dy:dx,count=Math.ceil(width/as)+1;addRow('تیرآهن طاق ضربی','kg',count*span*24*waste,11);addRow('آجر و ملات گچ طاق ضربی','m²',A,3);addRow('زیرسری فلزی '+$('archSupport').value,'kg',count*2*4*waste,12);}
-  else{let ps=Math.max(.3,+$('purlinSpace').value||1),dx=Math.max(...grid.map(n=>n.x)),dy=Math.max(...grid.map(n=>n.y)),len=$('roofDirection').value==='x'?dx:dy,width=$('roofDirection').value==='x'?dy:dx,count=Math.ceil(width/ps)+1;addRow('قوطی زیر ورق‌ها '+$('purlin').value,'kg',count*len*5.5*waste,12);addRow('ورق شیروانی '+$('sheetT').value+' mm','m²',ra*waste,13);addRow('پیچ، فلاشینگ و آب‌بندی','m²',ra,14);}
-  if(rt!=='shed'){
-   const sm=roofSlopeMetrics(A);const wpm=polygonMetrics(roofLinks),perimeter=wpm?wpm.perimeter:2*(Math.max(...grid.map(n=>n.x))+Math.max(...grid.map(n=>n.y))),up=perimeter*Math.max(0,+$('waterproofUpstand').value||0),wpFactor=1+Math.max(0,+$('waterproofWaste').value||0)/100,wpArea=(A*(+$('slopeFactor').value||1)+up)*wpFactor*Math.max(1,+$('waterproofLayers').value||1);addRow('ایزوگام بام پس از شیب‌بندی — با برگشت جان‌پناه و همپوشانی','m²',wpArea,21);
-   if(sm.valid){addRow('پوکه‌ریزی شیب‌بندی بام با شیب '+fmt(+$('roofSlopePct').value||1)+' درصد','m³',sm.volume*waste,22);$('wallReport').innerHTML+=`<h3>گزارش شیب‌بندی بام</h3><p class="hint">تعداد ناودان: ${fmt(drainPoints.length)} | شیب: ${fmt(+$('roofSlopePct').value||1)}٪ | فاصله شبکه: ${fmt(+$('drainGridStep').value||1)} متر | میانگین ضخامت محاسباتی پوکه: ${fmt(sm.avgDepth*100)} سانتی‌متر | بیشینه فاصله قائم تقریبی: ${fmt(sm.maxDepth*100)} سانتی‌متر | حجم پوکه: ${fmt(sm.volume)} مترمکعب. تراز ناودان‌ها صفر فرض شده است.</p>`;}
-   else $('wallReport').innerHTML+=`<p class="hint">برای محاسبه پوکه‌ریزی، ابتدا محل یک یا چند ناودان را با ابزار انتخاب ناودان روی نقشه مشخص کنید.</p>`;
-  }
- }
- // Optional columns only when a nonzero quantity is selected.
+ // Only completed, independent roof polygons are measured; an open outline has no area.
+ const roofList=roofRegions(roofLinks);
+ $('roofArea').textContent=roofList.length?fmt(roofList.reduce((z,r)=>z+areaForLinks(r.edgeIds.map(i=>roofLinks[i])),0))+' m²':'—';$('roofArea').parentElement.style.display=roofList.length?'':'none';
+ $('roofAreaTable').innerHTML=roofList.length?'<h3>جدول مساحت سقف‌های بسته‌شده</h3><table><thead><tr><th>سقف</th><th>نوع</th><th>مساحت خالص</th><th>مساحت با پیش‌آمدگی</th><th>جهت تیرها</th></tr></thead><tbody>'+roofList.map((r,i)=>{const c=roofSpecs[r.edgeIds[0]]||{};return '<tr><td>'+(i+1)+'</td><td>'+({joist:'تیرچه و بلوک',arch:'طاق ضربی',shed:'شیروانی'}[c.roofType]||'—')+'</td><td>'+fmt(r.metrics.area)+' m²</td><td>'+fmt(areaForLinks(r.edgeIds.map(k=>roofLinks[k])))+' m²</td><td>'+(c.roofDirection==='y'?'محور Y':'محور X')+'</td></tr>'}).join('')+'</tbody></table>':'<p class="hint">تا بسته‌شدن مرز سقف، مساحت و متره سقف خالی می‌ماند.</p>';
+ roofList.forEach((r,ri)=>{const cfg=roofSpecs[r.edgeIds[0]]||{},A=areaForLinks(r.edgeIds.map(i=>roofLinks[i])),rt=cfg.roofType||'joist',old=readRoofConfig();applyRoofConfig(cfg);
+  const ps=r.ids.map(i=>grid[i]),dx=Math.max(...ps.map(p=>p.x))-Math.min(...ps.map(p=>p.x)),dy=Math.max(...ps.map(p=>p.y))-Math.min(...ps.map(p=>p.y)),dir=cfg.roofDirection||'x',span=dir==='x'?dx:dy,across=dir==='x'?dy:dx,ra=A*(+(cfg.slopeFactor||1.05));
+  if(rt==='joist'){const topping=(+(cfg.topping||5))/100,space=Math.max(.2,+(cfg.joistSpace||.5)),count=Math.ceil(across/space)+1,total=count*span;addRow('بتن رویه سقف تیرچه و بلوک — سقف '+(ri+1),'m³',A*topping,0);addRow('تیرچه سقف '+(ri+1),'m',total,8);const blocks=cfg.blockType==='پلی‌استایرن'?A/(Math.max(.1,+(cfg.foamLength||2))*Math.max(.1,+(cfg.foamWidth||.5))):A*8.5;addRow('بلوک سقفی '+(cfg.blockType||'')+' — سقف '+(ri+1),'عدد',blocks*waste,9);addRow('میلگرد طولی تیرچه — سقف '+(ri+1),'kg',total*Math.max(1,+(cfg.joistBarCount||3))*(Math.pow(+(cfg.joistBarDia||12),2)/162)*waste,1);addRow('میلگرد حرارتی سقف '+(ri+1),'kg',A*4.5*waste,10)}
+  else if(rt==='arch'){const sp=Math.max(.3,+(cfg.archSpace||1)),count=Math.ceil(across/sp)+1;addRow('تیرآهن '+(cfg.archBeam||'IPE 14')+' طاق ضربی سقف '+(ri+1),'kg',count*span*24*waste,11);addRow('آجر و ملات گچ طاق ضربی سقف '+(ri+1),'m²',A,3);addRow('زیرسری فلزی '+(cfg.archSupport||'نبشی دوبل')+' سقف '+(ri+1),'kg',count*8*waste,12)}
+  else{const sp=Math.max(.3,+(cfg.purlinSpace||1)),count=Math.ceil(across/sp)+1;addRow('قوطی '+(cfg.purlin||'')+' زیر ورق سقف '+(ri+1),'kg',count*span*5.5*waste,12);addRow('ورق شیروانی '+(cfg.sheetT||.5)+' mm سقف '+(ri+1),'m²',ra*waste,13);addRow('پیچ، فلاشینگ و آب‌بندی سقف '+(ri+1),'m²',ra,14)}
+  if(rt!=='shed'){const up=r.metrics.perimeter*Math.max(0,+$('waterproofUpstand').value||0),wp=(A*(+(cfg.slopeFactor||1))+up)*(1+Math.max(0,+$('waterproofWaste').value||0)/100)*Math.max(1,+$('waterproofLayers').value||1);addRow('ایزوگام بام سقف '+(ri+1),'m²',wp,21);const sm=roofSlopeMetrics(A);if(sm.valid)addRow('پوکه شیب‌بندی سقف '+(ri+1),'m³',sm.volume*waste,22)}
+  applyRoofConfig(old);
+ }); // Optional columns only when a nonzero quantity is selected.
  let colMode=$('columns').value,ncol=colMode==='all'?grid.length:colMode==='corners'?4:colMode==='custom'?Math.max(0,+$('columnCount').value):0;
  if(ncol){let dim=($('colSize').value.match(/\d+/g)||[30,30]).map(Number),cv=(dim[0]/100)*(dim[1]/100)*(+$('colHeight').value||3)*ncol;addRow('بتن ستون‌ها','m³',cv,15);addRow('قالب‌بندی ستون‌ها','m²',ncol*2*(dim[0]+dim[1])/100*(+$('colHeight').value||3),7);}
  const body=rows.map(r=>`<tr><td>${r.name}</td><td>${r.unit}</td><td>${fmt(r.qty)}</td><td>${fmt(r.material)}</td><td>${fmt(r.labor)}</td><td class="money">${fmt(r.material+r.labor)}</td></tr>`).join('');
@@ -470,6 +470,28 @@ function calculate(){
  let mt=rows.reduce((s,r)=>s+r.material,0),lt=rows.reduce((s,r)=>s+r.labor,0),cur=$('currency').value;$('materialsTotal').parentElement.parentElement.style.display=rows.length?'grid':'none';$('materialsTotal').textContent=fmt(mt)+' '+cur;$('laborTotal').textContent=fmt(lt)+' '+cur;$('grandTotal').textContent=fmt(mt+lt)+' '+cur;$('calcState').textContent='آخرین محاسبه: '+new Date().toLocaleTimeString('fa-IR');lastCalc={mt,lt,total:mt+lt,area:roofExists?area():0,L};draw();
 }
 
+function calculate(){
+ if(window.__sahroudAggregateBusy){calculateSingleFloor();return;}
+ saveFloor();
+ const orig={activeFloor,beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs},all=[];
+ window.__sahroudAggregateBusy=true;
+ try{
+  const n=Math.max(1,+$('floorCount').value||1);
+  for(let f=1;f<=n;f++){
+   const d=f===activeFloor?{beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs}:floorStore[f]||{};
+   activeFloor=f;beams=d.beams||[];walls=d.walls||[];roofLinks=d.roofLinks||[];roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints||[];beamSpecs=d.beamSpecs||[];wallSpecs=d.wallSpecs||[];
+   calculateSingleFloor();
+   rows.forEach(q=>{const z=all.find(x=>x.name===q.name&&x.unit===q.unit&&x.priceIndex===q.priceIndex);if(z){z.qty+=q.qty;z.material+=q.material;z.labor+=q.labor}else all.push({...q})});
+  }
+  activeFloor=orig.activeFloor;beams=orig.beams;walls=orig.walls;roofLinks=orig.roofLinks;roofSpecs=orig.roofSpecs;drainPoints=orig.drainPoints;beamSpecs=orig.beamSpecs;wallSpecs=orig.wallSpecs;
+  calculateSingleFloor();rows=all;
+  const body=rows.map(q=>'<tr><td>'+q.name+'</td><td>'+q.unit+'</td><td>'+fmt(q.qty)+'</td><td>'+fmt(q.material)+'</td><td>'+fmt(q.labor)+'</td><td class="money">'+fmt(q.material+q.labor)+'</td></tr>').join('');
+  const nFloors=Math.max(1,+$('floorCount').value||1);
+  $('quantityOutput').innerHTML='<div class="hint">متره تجمیعی همه طبقات پروژه — '+nFloors+' طبقه</div>'+(rows.length?'<h3>جدول متره و برآورد تجمیعی</h3><div style="overflow:auto"><table><thead><tr><th>شرح عملیات / مصالح</th><th>واحد</th><th>مقدار کل</th><th>مصالح</th><th>دستمزد</th><th>جمع</th></tr></thead><tbody>'+body+'</tbody></table></div>':'<p class="hint">هنوز عضو قابل متره‌ای ترسیم نشده است.</p>');
+  const mt=rows.reduce((z,q)=>z+q.material,0),lt=rows.reduce((z,q)=>z+q.labor,0),cur=$('currency').value;
+  $('materialsTotal').textContent=fmt(mt)+' '+cur;$('laborTotal').textContent=fmt(lt)+' '+cur;$('grandTotal').textContent=fmt(mt+lt)+' '+cur;lastCalc={mt,lt,total:mt+lt};
+ }finally{window.__sahroudAggregateBusy=false;}
+}
 function downloadBlob(filename,blob){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
 function projectFloorSnapshot(f){
  const d=f===activeFloor?{beams,walls,roofLinks,roofSpecs,drainPoints,beamSpecs,wallSpecs}:floorStore[f]||{};
@@ -480,7 +502,7 @@ function buildFinalReport(){
  const nFloors=Math.max(1,+$('floorCount').value||1),floorResults=[];let allMat=0,allLab=0;
  for(let f=1;f<=nFloors;f++){
   const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;
-  calculate();const floorRows=rows.map(r=>({...r})),mat=+$('materialsTotal').textContent.replace(/[^0-9.]/g,'')||floorRows.reduce((a,r)=>a+r.material,0),lab=floorRows.reduce((a,r)=>a+r.labor,0),total=floorRows.reduce((a,r)=>a+r.material+r.labor,0);
+  calculateSingleFloor();const floorRows=rows.map(r=>({...r})),mat=+$('materialsTotal').textContent.replace(/[^0-9.]/g,'')||floorRows.reduce((a,r)=>a+r.material,0),lab=floorRows.reduce((a,r)=>a+r.labor,0),total=floorRows.reduce((a,r)=>a+r.material+r.labor,0);
   allMat+=floorRows.reduce((a,r)=>a+r.material,0);allLab+=floorRows.reduce((a,r)=>a+r.labor,0);
   const steelHtml=$('steelOutput').innerHTML;
   floorResults.push({f,d,rows:floorRows,steelHtml,total,mat:floorRows.reduce((a,r)=>a+r.material,0),lab});
@@ -579,7 +601,7 @@ function configurePriceSources(){
 }
 function exportCSV(){
  const original={activeFloor,beams,walls,roofLinks,drainPoints,beamSpecs,wallSpecs},all=[];
- saveFloor();for(let f=1;f<=Math.max(1,+$('floorCount').value||1);f++){const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;calculate();rows.forEach(r=>all.push([f===1?'اول':'دوم',r.name,r.unit,r.qty,r.material,r.labor,r.material+r.labor]));}
+ saveFloor();for(let f=1;f<=Math.max(1,+$('floorCount').value||1);f++){const d=projectFloorSnapshot(f);activeFloor=f;beams=d.beams;walls=d.walls;roofLinks=d.roofLinks;roofSpecs=d.roofSpecs||[];drainPoints=d.drainPoints;beamSpecs=d.beamSpecs;wallSpecs=d.wallSpecs;calculateSingleFloor();rows.forEach(r=>all.push([f===1?'اول':'دوم',r.name,r.unit,r.qty,r.material,r.labor,r.material+r.labor]));}
  activeFloor=original.activeFloor;beams=original.beams;walls=original.walls;roofLinks=original.roofLinks;drainPoints=original.drainPoints;beamSpecs=original.beamSpecs;wallSpecs=original.wallSpecs;calculate();
  let lines=[['طبقه','شرح','واحد','مقدار','هزینه مصالح','دستمزد','جمع'],...all];let csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');downloadBlob('SAHROUD-metreh-all-floors.csv',new Blob([csv],{type:'text/csv;charset=utf-8'}));
 }
